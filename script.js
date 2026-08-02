@@ -1,122 +1,109 @@
-// // creates tr and td with JS
-
-// const parent=document.getElementById('parent');
-//     for(let i=0;i<3;i++){
-//         const row=document.createElement('tr');
-//         for(let j=0;j<3;j++){
-//             const cell=document.createElement('td');
-//             cell.className='child';
-//             row.append(cell);
-//         }
-//         parent.append(row);
-// }
-
 const parent = document.getElementById('parent');
-const child = Array.from(document.getElementsByClassName('child'));
-const result = document.getElementById('result');
+const child = Array.from(document.getElementsByClassName("child"));
+const result = document.getElementById("result");
 const h1 = document.getElementById('h1');
-const x = document.getElementById('X');
-const o = document.getElementById('O');
-let countX = 0;
-let countO = 0;
-let step = 'X';
+const xDisplay = document.getElementById("X");
+const oDisplay = document.getElementById("O");
+
+let countX = Number(localStorage.getItem('countX')) || 0;
+let countO = Number(localStorage.getItem("countO")) || 0;
+let step = "X";
 let count = 0;
 let gameOver = false;
 
-parent.addEventListener('click', (event) => {
-    if (gameOver) {
+const winnerCombinations = [
+    [0,1,2], [3,4,5], [6,7,8],
+    [0,3,6], [1,4,7], [2,5,8],
+    [0,4,8], [2,4,6]
+];
+
+parent.addEventListener("click", (event) => {
+    const target = event.target;
+
+    if (gameOver || !target.classList.contains("child") || target.innerText !== "") {
         return;
     }
-    for (let i = 0; i < child.length; i++) {
-        if (child[i] === event.target && !child[i].innerText) {
-            child[i].innerText = step;
-            count++
-            if (step === 'O') {
-                step = 'X';
-                event.target.style.color = `rgb(13, 120, 170)`;
-                h1.innerText = `Play with "X"`;
-            } else {
-                step = 'O';
-                event.target.style.color = `rgb(13, 120, 150)`;
-                h1.innerText = `Play with "O"`;
-            }
-            checkWinner();
-            checkDraw();
-        }
+
+    target.innerText = step;
+    count++;
+
+    if(step == "X") {
+        target.style.color = "rgb(13, 120, 150)";
+        step = "O";
+        h1.innerText = "Play with O";
+    } else {
+        target.style.color = "rgb(13, 120, 150)";
+        step = "X";
+        h1.innerHTML = "Play with X";
+    }
+
+    checkWinner();
+    if (!gameOver) {
+        checkDraw();
     }
 });
 
 function checkWinner() {
-    const WinnerCombinations = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8],
-        [0, 3, 6], [1, 4, 7], [2, 5, 8],
-        [0, 4, 8], [2, 4, 6]
-    ];
-    for (let i = 0; i < WinnerCombinations.length; i++) {
-        const combination = WinnerCombinations[i];
-        const a = combination[0];
-        const b = combination[1];
-        const c = combination[2];
-        if (child[a].innerText === child[b].innerText && child[b].innerText === child[c].innerText &&
-            child[a].innerText) {
-            result.value = `Player '${child[a].innerText}' won!! 😀`;
-            result.style.color = 'green';
-            result.style.border = '2px solid green';
-            h1.innerText = 'Tic-Tac-Toe';
+    for(let combination of winnerCombinations) {
+        const [a,b,c] = combination;
+        const valA = child[a].innerText;
+
+        if(valA && valA === child[b].innerText && valA === child[c].innerText) {
+            result.value = `Player '${valA}' won!! 😀`;
+            result.style.color = "green";
+            result.style.border = "2px solid green";
+            h1.innerText = "Tic-Tac-Toe";
             gameOver = true;
-            if (child[a].innerText === 'X') {
+
+            if (valA === "X") {
                 countX++;
-                localStorage.setItem('countX', countX);
-            } else if (child[a].innerText === 'O') {
+                localStorage.setItem("countX", countX);
+            } else {
                 countO++;
-                localStorage.setItem('countO', countO);
+                localStorage.setItem("countO", countO);
             }
             updateCount();
+            return;
         }
     }
 }
 
 function checkDraw() {
-    if (count === 9 && !gameOver) {
+    if(count === 9) {
         result.value = `It's a draw!! 😒`;
-        result.style.color = 'red';
-        result.style.border = '2px solid red';
-        h1.innerText = 'Tic-Tac-Toe';
-        // countX++
-        // countO++
-        // localStorage.setItem('countX',countX);
-        // localStorage.setItem('countO',countO);
+        result.style.color = "red";
+        result.style.border = "2px solid red";
+        h1.innerText = "Tic-Tac-Toe";
         gameOver = true;
     }
-    updateCount();
-}
-
-if (localStorage.getItem('countX')) {
-    countX = localStorage.getItem('countX');
-}
-if (localStorage.getItem('countO')) {
-    countO = localStorage.getItem('countO');
 }
 
 function updateCount() {
-    // x.value=`X: ${countX}`;
-    // o.value=`O: ${countO}`;
-    x.innerText = `X:${countX}`;
-    o.innerText = `O:${countO}`;
+    xDisplay.innerText = `X: ${countX}`;
+    oDisplay.innerText = `O: ${countO}`;
 }
-updateCount();
 
 function resetCount() {
-    x.innerText = `X:0`;
-    o.innerText = `O:0`;
-    x.value = `X: 0`;
-    o.value = `O: 0`;
+    countX = 0;
+    countO = 0;
     localStorage.clear();
+    updateCount();
 }
 
 function playAgain() {
-    return location.reload();
+    child.forEach(cell => {
+        cell.innerText = "";
+        cell.style.color = "";
+    });
+    count = 0;
+    step = "X";
+    gameOver = false;
+    result.value = '';
+    result.style.border = '';
+    h1.innerText = 'Play with "X"';
 }
 
-document.querySelector('#btn').addEventListener('click', () => resetCount());
-document.querySelector('#btn1').addEventListener('click', () => playAgain());
+updateCount();
+
+document.getElementById("btn").addEventListener('click', resetCount);
+document.getElementById('btn1').addEventListener('click', playAgain);
